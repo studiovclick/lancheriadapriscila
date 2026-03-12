@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Lancheria da Pri</title>
+
+<style>
+
+:root{
+--primaria:#8B4513;
+--secundaria:#FF8C00;
+--destaque:#D32F2F;
+--fundo:#fafafa;
+--branco:#fff;
+}
+
+body{
+    align-items: center;
+font-family:Arial;
+background:var(--fundo);
+margin:0;
+padding-bottom:150px;
+}
+
+header{
+background:var(--primaria);
+color:white;
+text-align:center;
+padding:20px;
+}
+
+.container{
+    align-items: center;
+max-width:700px;
+margin:auto;
+padding:15px;
+
+}
+
+.categoria{
+font-size:22px;
+margin:35px 0 15px;
+border-left:6px solid var(--destaque);
+padding-left:10px;
+}
+
+.item{
+    align-items: center;
+background:white;
+border-radius:18px;
+overflow:hidden;
+margin-bottom:25px;
+box-shadow:0 6px 15px rgba(0,0,0,0.1);
+position:relative;
+}
+
+.img{
+height: 450px;
+
+background-size:cover;
+background-position:center;
+}
+
+.info{
+padding:15px;
+}
+
+.preco{
+color:var(--destaque);
+font-size:20px;
+font-weight:bold;
+margin:10px 0;
+}
+
+.badge{
+position:absolute;
+top:10px;
+left:10px;
+background:#FFD700;
+padding:5px 10px;
+border-radius:8px;
+font-size:12px;
+font-weight:bold;
+}
+
+.btn-qtd{
+background:var(--secundaria);
+color:white;
+border:none;
+width:35px;
+height:35px;
+border-radius:8px;
+font-size:18px;
+cursor:pointer;
+}
+
+.btn-add{
+    align-items: center;
+background:var(--secundaria);
+color:var(black);
+border:none;
+padding:16px;
+border-radius:35px;
+width:80%;
+margin-top:10px;
+font-weight:bold;
+cursor:pointer;
+}
+
+.obs{
+width:100%;
+margin-top:10px;
+padding:8px;
+border-radius:6px;
+border:1px solid #ccc;
+}
+
+#cart-bar{
+position:fixed;
+bottom:0;
+width:100%;
+background:linear-gradient(90deg,#FF8C00,#D32F2F);
+color:white;
+text-align:center;
+padding:16px;
+font-weight:bold;
+cursor:pointer;
+}
+
+#modal{
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.85);
+overflow:auto;
+}
+
+.modal-body{
+background:white;
+max-width:500px;
+margin:30px auto;
+padding:25px;
+border-radius:18px;
+}
+
+.cart-item{
+border-bottom:1px solid #eee;
+padding:10px 0;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<h1>🍔 Lancheria da Pri</h1>
+</header>
+
+<div class="container">
+<div id="menu"></div>
+</div>
+
+<div id="cart-bar" onclick="abrirCarrinho()">
+🛒 Ver Carrinho | <span id="total-bar">R$ 0.00</span>
+</div>
+
+<div id="modal">
+<div class="modal-body">
+
+<h2>Seu Pedido</h2>
+
+<div id="cart"></div>
+
+<h3>Dados para entrega</h3>
+
+<input id="cli-nome" class="obs" placeholder="Seu nome">
+
+<input id="cli-tel" class="obs" placeholder="Telefone">
+
+<input id="cli-rua" class="obs" placeholder="Rua">
+
+<input id="cli-numero" class="obs" placeholder="Número">
+
+<select id="bairro" class="obs" onchange="calcEntrega()">
+
+<option value="">Selecione seu bairro</option>
+
+<option data-tax="5">Centro</option>
+<option data-tax="5">Vila Elza</option>
+<option data-tax="6">Umbu</option>
+<option data-tax="6">Americana</option>
+<option data-tax="7">Salomé</option>
+<option data-tax="7">Bela Vista</option>
+<option data-tax="8">Jardim Algarve</option>
+<option data-tax="8">Jardim Porto Alegre</option>
+<option data-tax="9">Nova Alvorada</option>
+<option data-tax="9">Passo do Feijó</option>
+<option data-tax="10">Maria Regina</option>
+<option data-tax="10">Aparecida</option>
+<option data-tax="11">São Pedro</option>
+<option data-tax="12">Formoza</option>
+<option data-tax="15">Outros bairros</option>
+
+</select>
+
+<h3>Taxa entrega: <span id="taxa">R$0</span></h3>
+
+<h3>Total: <span id="total">R$0</span></h3>
+
+<button class="btn-add" style="background:#25D366" onclick="enviar()">
+Finalizar no WhatsApp
+</button>
+
+<button class="btn-add" onclick="abrirCarrinho()">Voltar</button>
+
+</div>
+</div>
+
+<script>
+
+const telefone="5551989727254"
+
+const data={
+
+hamburguer_especial: [
+
+{id:11,nome:"BURGUER GRATINADO",preco:39.99,img:"img/hburguer2.png",comp:"Blend, Calabresa Defumada, Bacon Fatias, Alface, Tomate, Chedar, Molho da Casa"},
+{id:12,nome:"BURGUER MISTERIOSO",preco:39.99,img:"img/hburguer1.png",comp:"Blend, Bacon Cubos, Cheddar, Alface, Tomate, Ovo, Molho da Casa"},
+{id:13,nome:"BURGUER AGRIDOCE",preco:34.99,img:"img/hburguer3.png",comp:"Blend, Abacaxi, Bacon Tiras, Queijo, Maionese"},
+{id:14,nome:"BURGUER CAMARÃO",preco:49.99,img:"img/camarao.png",comp:"Camarão Alho e Óleo, Alface, Tomate, Catupiry, Molho da Casa"}
+
+],
+
+hamburguer_tradicional:[
+
+{id:15,nome:"BURGUER CARNE",preco:21.99,img:"img/hburguer1.png",comp:"Hambúrguer, Tomate, Alface, Cheddar, Molho da Casa"},
+{id:16,nome:"BURGUER DUPLO",preco:27.99,img:"img/hburguer5.png",comp:"2 Hambúrguer, Tomate, Alface, Cheddar, Molho da Casa"},
+{id:17,nome:"BURGUER ESPECIAL",preco:28.99,img:"img/especial.png",comp:"Hambúrguer, Tomate, Alface, Cheddar, Onions, Picles, Molho da Casa"},
+{id:18,nome:"BURGUER DORITOS",preco:29.99,img:"img/burguerdoritos.png",comp:"Hambúrguer, Tomate, Alface, Batata Palha, Queijo, Molho da Casa"},
+{id:19,nome:"BURGUER STROGONOFF",preco:28.99,img:"img/strogonoff.png",comp:"Pão, 2 carnes, dobro de queijo"},
+{id:20,nome:"BURGUER BACON",preco:29.99,img:"img/hbacon.png",comp:"Pão, 2 carnes, bacon, queijo"},
+{id:21,nome:"BURGUER KIDS",preco:19.99,img:"img/kids.png",comp:"Maionese, Carne, Queijo"}
+
+],
+
+xis:[
+
+{id:1,nome:"XIS CARNE",preco:21.99,img:"img/xiscarne.png",comp:"CARNE, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:2,nome:"XIS CARNE ACEBOLADO",preco:24.99,img:"img/acebolado.png",comp:"CARNE, CEBOLA REFOGADA, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:3,nome:"XIS CARNE DUPLO",preco:28.99,img:"img/carneduplo.png",comp:"2 CARNES, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:4,nome:"XIS FRANGO",preco:22.99,img:"img/xisfrango.png",comp:"FRANGO, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:6,nome:"XIS CALABRESA",preco:25.99,img:"img/xiscalabresa.png",comp:"CARNE, CALABRESA, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:7,nome:"XIS CALABRESA / CARNE",preco:29.99,img:"img/calabresacomcarne.png",comp:"2 CARNES, CALABRESA, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:8,nome:"XIS CORAÇÃO",preco:29.99,img:"img/xiscoracao.png",comp:"CARNE, CORAÇÃO, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:33,nome:"XIS BACON",preco:28.99,img:"img/xbacon.png",comp:"CARNE, BACON, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:9,nome:"XIS STROGONOFF",preco:31.99,img:"img/xisstrogonoff.png",comp:"STROGONOFF, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"},
+{id:10,nome:"XIS TUDO",preco:34.99,img:"img/xistudo.png",comp:"TODAS CARNES, TOMATE, ALFACE, OVO, QUEIJO, MILHO, ERVILHA, MAIONESE, MOSTARDA, KETCHUP"}
+
+],
+
+porcoes:[
+
+{id:22,nome:"Fritas Média",preco:23.99,img:"img/fritas1.png"},
+{id:23,nome:"Onions P",preco:14.99,img:"img/onions.png"},
+{id:24,nome:"Barca Burguer",preco:49.99,img:"img/barcaburguer.png"},
+{id:25,nome:"Fritas Cheddar/Bacon",preco:37.99,img:"img/fritascombacon.png",comp:"Fritas, Bacon Cubos, Cheddar"}
+
+],
+
+bebidas:[
+
+{id:31,nome:"Coca-Cola 2L",preco:15.99,img:"img/cocacola.png"},
+{id:32,nome:"Guaraná Fruki 2L",preco:11.99,img:"img/guarana.png"}
+
+]
+
+}
+
+let carrinho=[]
+let taxaEntrega=0
+
+function init(){
+
+const menu=document.getElementById("menu")
+
+for(let cat in data){
+
+menu.innerHTML+=`<div class="categoria">${cat.replace("_"," ").toUpperCase()}</div>`
+
+data[cat].forEach(item=>{
+
+let badge=""
+if(item.id==10||item.id==11) badge=`<div class="badge">🔥 MAIS PEDIDO</div>`
+
+let compHTML=""
+if(item.comp){
+compHTML=`<p style="font-size:13px;color:#555;margin:6px 0">${item.comp}</p>`
+}
+
+menu.innerHTML+=`
+
+<div class="item">
+
+${badge}
+
+<div class="img" style="background-image:url('${item.img}')"></div>
+
+<div class="info">
+
+<b>${item.nome}</b>
+
+${compHTML}
+
+<div class="preco">R$ ${item.preco.toFixed(2)}</div>
+
+<input class="obs" id="obs-${item.id}" placeholder="Observação">
+
+<button class="btn-add" onclick="add('${item.nome}',${item.preco},${item.id})">
+Adicionar
+</button>
+
+</div>
+
+</div>
+
+`
+
+})
+
+}
+
+}
+
+function add(nome,preco,id){
+
+let obs=document.getElementById("obs-"+id).value
+
+carrinho.push({nome,preco,obs})
+
+update()
+
+alert("Adicionado ao carrinho")
+
+}
+
+function update(){
+
+let total=0
+
+carrinho.forEach(i=>total+=i.preco)
+
+document.getElementById("total-bar").innerText="R$ "+total.toFixed(2)
+
+}
+
+function abrirCarrinho(){
+
+const m=document.getElementById("modal")
+
+m.style.display=m.style.display=="block"?"none":"block"
+
+render()
+
+}
+
+function render(){
+
+const c=document.getElementById("cart")
+
+c.innerHTML=""
+
+let total=0
+
+carrinho.forEach((i,x)=>{
+
+total+=i.preco
+
+c.innerHTML+=`
+
+<div class="cart-item">
+
+${i.nome}
+
+<br>
+
+<small>${i.obs}</small>
+
+<br>
+
+R$ ${i.preco.toFixed(2)}
+
+<button onclick="rem(${x})" style="float:right;color:red;border:none;background:none">Remover</button>
+
+</div>
+
+`
+
+})
+
+document.getElementById("total").innerText="R$ "+(total+taxaEntrega).toFixed(2)
+
+}
+
+function rem(i){
+
+carrinho.splice(i,1)
+
+update()
+
+render()
+
+}
+
+function calcEntrega(){
+
+const select=document.getElementById("bairro")
+
+const option=select.options[select.selectedIndex]
+
+taxaEntrega=parseFloat(option.getAttribute("data-tax"))||0
+
+document.getElementById("taxa").innerText="R$ "+taxaEntrega.toFixed(2)
+
+render()
+
+}
+
+function enviar(){
+
+let nome=document.getElementById("cli-nome").value
+
+let tel=document.getElementById("cli-tel").value
+
+let rua=document.getElementById("cli-rua").value
+
+let numero=document.getElementById("cli-numero").value
+
+let bairro=document.getElementById("bairro").value
+
+if(!nome||!tel||!rua||!numero||!bairro){
+alert("Preencha todos dados")
+return
+}
+
+let msg="*PEDIDO LANCHERIA DA PRI*%0A%0A"
+
+carrinho.forEach(i=>{
+msg+=`${i.nome}%0AObs:${i.obs}%0APreço:R$${i.preco}%0A%0A`
+})
+
+msg+=`Cliente:${nome}%0A`
+
+msg+=`Telefone:${tel}%0A`
+
+msg+=`Endereço:${rua},${numero}%0A`
+
+msg+=`Bairro:${bairro}%0A`
+
+msg+=`Taxa:R$${taxaEntrega}%0A`
+
+msg+=`Total:${document.getElementById("total").innerText}`
+
+window.open(`https://wa.me/${telefone}?text=${msg}`)
+
+}
+init()
+
+</script>
+</body>
+</html>
